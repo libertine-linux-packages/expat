@@ -15,12 +15,48 @@ build_needs cmake
 
 depends build_busybox
 
-depends build_musl_cross_make_host
-build_needs "$libertine_host"-cc "$libertine_host"-c++ "$libertine_host"-ar "$libertine_host"-ld "$libertine_host"-ranlib
 
 case "$package" in
 	
+	build_expat)		
+			depends build_musl_cross_make_build
+			build_needs "$libertine_build"-cc "$libertine_build"-c++ "$libertine_build"-ar "$libertine_build"-ld "$libertine_build"-ranlib
+	
+			build_needs sed
+			libertine_compile_build_expat()
+			{
+				pushd "$(libertine_public_sourcePath)"/expat
+				
+					# Fails for some reason on gcc 6.2.0
+					sed -i \
+						-e 's;check_symbol_exists("off_t" "sys/types.h" SIZE_T);set(SIZE_T "unsigned");g' \
+						ConfigureChecks.cmake
+			
+					libertine_public_cmake \
+						-DBUILD_tools:BOOL=OFF \
+						-DBUILD_examples:BOOL=OFF \
+						-DBUILD_tests:BOOL=OFF \
+						-DBUILD_shared:BOOL=OFF \
+						-DBUILD_doc:BOOL=OFF \
+						-DXML_DTD:BOOL=ON \
+						-DXML_NS:BOOL=ON
+		
+					pushd .libertine-cmake-build
+					
+						libertine_public_make VERBOSE=1
+					
+						libertine_public_make install
+					
+					popd
+		
+				popd
+			}
+		;;
+	
 	expat)
+		
+		depends build_musl_cross_make_host
+		build_needs "$libertine_host"-cc "$libertine_host"-c++ "$libertine_host"-ar "$libertine_host"-ld "$libertine_host"-ranlib
 	
 		build_needs sed
 		libertine_compile_expat()
